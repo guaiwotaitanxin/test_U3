@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.com.djin.ssm.mapper.DeptMapper">
+
+    <!--自定义结果集-->
+    <resultMap id="deptMap" type="Dept">
+        <!--配置主键id-->
+        <id property="deptno" column="deptno"/>
+        <!--配置其他的字段-->
+        <result property="dname" column="dname"/>
+        <result property="loc" column="loc"/>
+    </resultMap>
+
+    <!--配置查询部门以及其所有员工的自定义结果集，（预先抓取：一对多）-->
+    <resultMap id="deptAndEmpMap" type="Dept" extends="deptMap">
+         <!--
+           property="emps"  部门对象中员工集合名字
+           column="deptno"  部门员工之间关联的字段
+           ofType="Emp"  部门对象中员工集合泛型
+           javaType="ArrayList"  部门对象中员工集合类型
+           resultMap="cn.com.djin.mybaits.mapper.EmpMapper.empMap"  关联的员工结果集
+         -->
+         <collection property="emps" column="deptno" ofType="Emp" javaType="ArrayList" resultMap="com.hyl.mapper.EmpMapper.empMap"/>
+    </resultMap>
+
+    <!---配置查询部门以及其所有员工的自定义结果集，（嵌套查询：懒加载：一对多）-->
+    <resultMap id="deptAndSelEmpMap" type="Dept" extends="deptMap">
+          <!--
+             property="emps"  部门对象中员工集合名字
+             column="deptno"  部门员工之间关联的字段
+             ofType="Emp"  部门对象中员工集合泛型
+             javaType="ArrayList"  部门对象中员工集合类型
+             select="cn.com.djin.mybaits.mapper.EmpMapper.selEmpsByDeptno"  嵌套查询员工
+             （根据部门编号column="deptno" 查询empMapper中的selEmpsByDeptno，得到员工集合数据给property="emps" ）
+          -->
+          <collection property="emps" column="deptno" ofType="Emp" javaType="ArrayList" select="com.hyl.mapper.EmpMapper.selEmpsByDeptno"/>
+    </resultMap>
+
+
+    <!--要查询的字段-->
+    <sql id="sel_dept_cloumn">
+        deptno,dname,loc
+    </sql>
+
+    <!--根据部门编号查询单个部门数据-->
+    <select id="selDeptByDeptno" resultMap="deptMap">
+        select <include refid="sel_dept_cloumn"/> from dept where deptno=#{deptno}
+    </select>
+
+    <!--据部门编号查询单个部门数据和其下的所有员工数据（预先抓取）-->
+    <select id="selDeptAndEmpByDeptno" resultMap="deptAndEmpMap">
+        SELECT * from dept LEFT JOIN emp on dept.deptno = emp.deptno where dept.deptno=#{deptno}
+    </select>
+
+    <!--据部门编号查询单个部门数据和其下的所有员工数据（嵌套查询；懒加载）-->
+     <select id="selDeptAndSelEmpByDeptno" resultMap="deptAndSelEmpMap">
+         select <include refid="sel_dept_cloumn"/> from dept where deptno=#{deptno}
+     </select>
+
+    <!--查询所有部门数据-->
+    <select id="selAllDept" resultMap="deptMap">
+        select <include refid="sel_dept_cloumn"/> from dept
+    </select>
+
+
+</mapper>
